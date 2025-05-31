@@ -1,5 +1,3 @@
-# Streamlit IoT Dashboard Template - Mulai dari Nol
-
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, db
@@ -8,7 +6,7 @@ import altair as alt
 import pandas as pd
 
 # ------------------ Inisialisasi Firebase ------------------ #
-cred = credentials.Certificate("tubescd-firebase-adminsdk-fbsvc-ee8b20535b.json")
+cred = credentials.Certificate("tubescd-firebase-adminsdk-fbsvc-9bc24f8fe2.json")
 if not firebase_admin._apps:
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://tubescd-default-rtdb.asia-southeast1.firebasedatabase.app/'
@@ -16,18 +14,6 @@ if not firebase_admin._apps:
 
 st.set_page_config(page_title="Dashboard Kebun Buah Naga", layout="wide")
 st.title("🌿 Dashboard Monitoring Kebun Naga")
-
-# ------------------ Ambil Data RTC ------------------ #
-rtc_ref = db.reference("rtc")
-rtc_data = rtc_ref.get() or {}
-print("RTC Data dari Firebase:", rtc_data)
-
-with st.expander("⏰ Waktu dari RTC (ESP32)"):
-    st.write(f"📅 Tanggal: {rtc_data.get('day', '-')}/{rtc_data.get('month', '-')}/{rtc_data.get('year', '-')}")
-    st.write(f"🕒 Waktu: {rtc_data.get('hour', '-')}:{rtc_data.get('minute', '-')}:{rtc_data.get('second', '-')}")
-
-with st.expander("🔍 Debug RTC JSON"):
-    st.json(rtc_data)
 
 # ------------------ Riwayat Perubahan Umur Tanaman ------------------ #
 with st.expander("📜 Riwayat Perubahan Umur Tanaman"):
@@ -109,7 +95,7 @@ def render_dashboard():
 
         pemupukan_data = pemupukan_ref.get() or {}
         with st.form(key="pemupukan_form", clear_on_submit=False):
-            input_umur = st.number_input("Input Umur Tanaman (bulan)", min_value=0, max_value=12, step=1, value=pemupukan_data.get("umur", 0), key="input_umur")
+            input_umur = st.number_input("Input Umur Tanaman (bulan)", min_value=0, max_value=12, step=1, value=pemupukan_data.get("umur", 0), key="input_umur_fixed")
             submit_umur = st.form_submit_button("📤 Update Umur Tanaman")
             if submit_umur:
                 log_ref = db.reference("log_umur")
@@ -178,38 +164,7 @@ def render_dashboard():
             st.markdown(f"<div style='background-color:{status_color_pompa};padding:10px;border-radius:5px;color:white'>🚿 Status Pompa: <b>{status_pompa}</b></div>", unsafe_allow_html=True)
             st.metric("Waktu RTC", waktu_data.get("rtc", "-"))
 
-        st.subheader("📈 Grafik Sensor")
-        with st.expander("⬇️ Unduh / Reset"):
-            st.download_button(
-                "📁 Unduh Data Sensor (CSV)",
-                data=history.to_csv(index=False).encode("utf-8"),
-                file_name="sensor_data.csv",
-                mime="text/csv"
-            )
-            if st.button("🗑️ Reset Data Pemupukan"):
-                db.reference("pemupukan").set({
-                    "umur": 0,
-                    "jenis_pupuk": "-",
-                    "dosis": "-",
-                    "keterangan": "-"
-                })
-                st.success("♻️ Data pemupukan berhasil direset!")
-        moisture_chart = alt.Chart(history).transform_fold(
-            ["moisture1", "moisture2", "moisture3"],
-            as_=["Sensor", "Persentase"]
-        ).mark_line().encode(
-            x="timestamp:T",
-            y=alt.Y("Persentase:Q", scale=alt.Scale(domain=[0, 100]), title="Kelembapan (%)"),
-            color="Sensor:N"
-        ).properties(height=250)
-
-        lux_chart = alt.Chart(history).mark_line(color="orange").encode(
-            x="timestamp:T",
-            y=alt.Y("lux:Q", title="Lux", scale=alt.Scale(domain=[0, 1000]))
-        ).properties(height=250)
-
-        st.altair_chart(moisture_chart, use_container_width=True)
-        st.altair_chart(lux_chart, use_container_width=True)
+        
 
         st.subheader("🛠️ Kontrol Manual")
         with st.form(key="kontrol_form"):
