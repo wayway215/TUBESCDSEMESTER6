@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: kebun-naga-app
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run streamlit_app.py --server.port=10000 --server.enableCORS false --server.enableXsrfProtection false
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+    plan: free
